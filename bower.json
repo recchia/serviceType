@@ -1,0 +1,24 @@
+{
+  "name": "pse",
+  "authors": [
+    "Piero Recchia <precchia_ext@dlatv.net>"
+  ],
+  "description": "ServiceType tester",
+  "main": "index.php",
+  "keywords": [
+    "ServiceType"
+  ],
+  "license": "MIT",
+  "homepage": "http://servicetype.tester",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "^3.3.7",
+    "humane-js": "humane#^3.2.2"
+  }
+}

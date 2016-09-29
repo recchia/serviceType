@@ -1,0 +1,30 @@
+{% extends "::layout.html.twig" %}
+
+{% block title %}AppBundle:ServiceTypeController:index{% endblock %}
+
+{% block content %}
+<h1>Lista de ServiceType</h1>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th></th>
+                <th>ServiceType</th>
+                <th>Descripci&oacute;n</th>
+                <th>Precio</th>
+                <th>Regi&oacute;n</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in results.currentPageResults %}
+                <tr>
+                    <td><a class="btn btn-primary" href="{{ path('fill', {'id' : item.id}) }}">Probar</a></td>
+                    <td>{{ item.number }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.amount }}</td>
+                    <td>{{ item.region }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+{% endblock %}
