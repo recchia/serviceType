@@ -19,3 +19,5 @@ parameters:
     secret:            ThisTokenIsNotSoSecretChangeIt
     service_username: username
     service_password: password
+    service_wsdl: parlayx_payment_amount_charging_service_2_1.wsdl
+    service_provider_id: 6056
