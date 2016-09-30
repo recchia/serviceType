@@ -32,7 +32,11 @@
                         console.log(data);
                     })
                     .fail(function(data) {
-                        humane.log('(' + data.status + ') ' +data.responseJSON.message, { addnCls: 'humane-original-error' });
+                        if (data.status == 500) {
+                            humane.log('(' + data.status + ') ' +data.responseJSON.message, { addnCls: 'humane-original-error' });
+                        } else {
+                            humane.log('(' + data.status + ') ' +data.responseJSON, { addnCls: 'humane-original-error' });
+                        }
                     });
                 });
             });

@@ -5,6 +5,7 @@ namespace AppBundle\Controller;
 use AppBundle\Form\ChargingType;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
+use Symfony\Component\Form\Form;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Zend\Soap\Client;
@@ -49,22 +50,31 @@ class ServiceTypeController extends Controller
      */
     public function chargingAction(Request $request)
     {
-        $params = $this->buildParams($request);
+        $form = $this->createForm(ChargingType::class);
+        $form->handleRequest($request);
 
-        $wsdl = $this->getParameter('kernel.root_dir') . '/config/wsdl/charging/' . $this->getParameter('service_wsdl');
-        $user = $this->getParameter('service_username');
-        $password = $this->getParameter('service_password');
+        if($form->isValid()) {
+            $params = $this->buildParams($request);
 
-        try {
-            $client = new Client($wsdl, ['encoding' => 'UTF-8', 'soap_version' => SOAP_1_1]);
-            $header = $this->buildSecurityHeader($user, $password);
-            $client->addSoapInputHeader($header);
-            $response = $client->call('chargeAmount', $params);
-        } catch (\Exception $e) {
-            return new JsonResponse(['message' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            $wsdl = $this->getParameter('kernel.root_dir') . '/config/wsdl/charging/' . $this->getParameter('service_wsdl');
+            $user = $this->getParameter('service_username');
+            $password = $this->getParameter('service_password');
+
+            try {
+                $client = new Client($wsdl, ['encoding' => 'UTF-8', 'soap_version' => SOAP_1_1]);
+                $header = $this->buildSecurityHeader($user, $password);
+                $client->addSoapInputHeader($header);
+                $response = $client->call('chargeAmount', $params);
+            } catch (\Exception $e) {
+                return new JsonResponse(['message' => $e->getMessage()], JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            }
+
+            return new JsonResponse($response);
+        } else {
+            $errors = $this->getErrorMessages($form);
+
+            return new JsonResponse($errors, JsonResponse::HTTP_BAD_REQUEST);
         }
-
-        return new JsonResponse($response);
     }
 
     /**
@@ -75,26 +85,13 @@ class ServiceTypeController extends Controller
     private function buildSecurityHeader($username, $password)
     {
         $digest = $this->getDigest($password);
+        $path = $this->getParameter('kernel.root_dir') . '/config/wsdl/charging/authentication.xml';
+        $content = file_get_contents($path);
+        $header = sprintf($content, $username, $digest['digest'], $digest['random'], $digest['timestamp'], rand(0, 999));
+        $auth = new \SoapVar($header, XSD_ANYXML);
+        $soapHeader = new \SoapHeader("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security", $auth, true);
 
-        $auth = '
-			<wsse:Security xmlns:wsse="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd">
-				<wsse:UsernameToken xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd">
-					<wsse:Username>' . trim($username) . '</wsse:Username>
-					<wsse:Password Type="...#PasswordDigest">' . $digest['digest'] . '</wsse:Password>
-					<wsse:Nonce>' . $digest['random'] . '</wsse:Nonce>
-					<wsu:Created>' . $digest['timestamp'] . '</wsu:Created>
-				</wsse:UsernameToken>
-			</wsse:Security>
-			<tns:RequestSOAPHeader xmlns:tns="http://www.huawei.com/schema/common/v2_1">
-				<tns:AppId>service0001</tns:AppId>
-				<tns:TransId>200903241230451' . rand(0, 999) . '</tns:TransId>
-				<tns:OA>tel:08612345678900</tns:OA>
-				<tns:FA>tel:08612345678900</tns:FA>
-			</tns:RequestSOAPHeader>';
-        $authvalues = new \SoapVar($auth, XSD_ANYXML);
-        $header = new \SoapHeader("http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-secext-1.0.xsd", "Security", $authvalues, true);
-
-        return $header;
+        return $soapHeader;
     }
 
     /**
@@ -148,6 +145,19 @@ class ServiceTypeController extends Controller
         ];
 
         return $parameters;
+    }
+
+    /**
+     * @param Form $form
+     * @return array
+     */
+    private function getErrorMessages(Form $form) {
+        $errors = array();
+        foreach ($form->getErrors(true, false) as $error) {
+            $errors[] = $error->current()->getMessage();
+        }
+
+        return $errors;
     }
 
 }
