@@ -7,3 +7,11 @@ services:
 #    service_name:
 #        class: AppBundle\Directory\ClassName
 #        arguments: ["@another_service_name", "plain_value", "%parameter_name%"]
+    app.service_type_repository:
+        class: Doctrine\ORM\EntityRepository
+        factory: ['@doctrine.orm.default_entity_manager', getRepository]
+        arguments: [AppBundle\Entity\ServiceType]
+
+    app.charging_service:
+        class: AppBundle\Service\ChargingService
+        arguments: ['@app.service_type_repository', '%kernel.root_dir%', '%service_username%', '%service_password%', '%service_wsdl%', '%service_provider_id%']
