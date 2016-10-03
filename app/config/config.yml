@@ -74,6 +74,13 @@ fos_user:
 
 easy_admin:
     site_name: 'AMCO <em style="font-size: 80%;">DLA</em>'
+    design:
+        menu:
+            - { label: 'Homepage', route: 'home' }
+            - Currency
+            - Country
+            - ServiceType
+            - User
     entities:
         User:
             class: AppBundle\Entity\User
